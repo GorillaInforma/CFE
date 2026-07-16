@@ -1,0 +1,585 @@
+
+<!-- ═══════════════════════════════════════════════════════════
+     ONBOARDING — Bienvenida / Aviso de privacidad / Carga de
+     recibo / Extracción / Revisión y edición de datos
+     ═══════════════════════════════════════════════════════════ -->
+<div id="ob-overlay" class="ob-overlay">
+
+  <!-- PASO SERVICIOS: CAMBIAR DE SERVICIO/MEDIDOR -->
+  <div class="ob-step" id="ob-step-servicios" style="display:none;">
+    <div class="ob-card">
+      <h2 class="ob-h2">Servicios / medidores</h2>
+      <p class="ob-sub" style="margin-bottom:14px;">Cambia entre tus recibos guardados, agrega uno nuevo o elimina el que ya no uses.</p>
+      <div id="ob-servicios-lista"><!-- generado por JS --></div>
+
+      <div style="border-top:1px solid var(--border); margin-top:16px; padding-top:14px;">
+        <h3 style="font-size:12px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin:0 0 10px;">Compartir con un familiar</h3>
+        <p class="ob-sub" style="margin-bottom:10px; font-size:12px;">Genera una clave con los datos del servicio activo para que otro familiar la importe sin volver a subir fotos, o pega una clave que te compartieron.</p>
+        <div class="ob-actions" style="margin-top:0;">
+          <button class="ob-btn ob-btn-ghost" id="ob-btn-compartir-clave">Generar clave para compartir</button>
+          <button class="ob-btn ob-btn-ghost" id="ob-btn-importar-clave">Tengo una clave</button>
+        </div>
+        <div class="ob-actions" style="margin-top:8px;">
+          <button class="ob-btn ob-btn-ghost" id="ob-btn-comparar-clave">Comparar mi recibo con una clave</button>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--border); margin-top:16px; padding-top:14px;">
+        <h3 style="font-size:12px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin:0 0 10px;">Ajustes</h3>
+
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;">
+          <div style="min-width:0;">
+            <div style="font-weight:600; font-size:13px;">Avisarme cerca del excedente</div>
+            <div style="font-size:11px; color:var(--muted); margin-top:2px;">Notificación aunque no tengas la app abierta.</div>
+          </div>
+          <label style="display:inline-flex; align-items:center; cursor:pointer; flex-shrink:0;">
+            <input type="checkbox" id="ob-check-notif-excedente" style="width:18px; height:18px;">
+          </label>
+        </div>
+
+        <div class="ob-actions" style="margin-top:0;">
+          <button class="ob-btn ob-btn-ghost" id="ob-btn-exportar-json" title="Descarga todos tus servicios y lecturas en un archivo JSON">Respaldar (JSON)</button>
+          <button class="ob-btn ob-btn-ghost" id="ob-btn-exportar-csv" title="Descarga tu histórico de lecturas en una hoja de cálculo">Respaldar (CSV)</button>
+        </div>
+      </div>
+
+      <div class="ob-actions" style="margin-top:16px;">
+        <button class="ob-btn ob-btn-ghost" id="ob-btn-servicios-cerrar">Cerrar</button>
+        <button class="ob-btn ob-btn-primary" id="ob-btn-servicios-agregar">+ Agregar servicio nuevo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 0: BIENVENIDA -->
+  <div class="ob-step" id="ob-step-bienvenida">
+    <div class="ob-card ob-card-center">
+      <div class="ob-logo"><div class="cfe-badge" style="font-size:20px;padding:10px 18px;">CFE</div></div>
+      <h1 class="ob-title">CFE Monitor</h1>
+      <p class="ob-sub">Sigue tu consumo eléctrico en tiempo real, con proyecciones de costo basadas en tu recibo real y tus propias lecturas de medidor.</p>
+      <ul class="ob-list">
+        <li>Extrae automáticamente los datos de tu recibo CFE</li>
+        <li>Calibra el consumo en vivo con lecturas reales</li>
+        <li>Proyecta el costo estimado de tu próximo pago</li>
+      </ul>
+      <button class="ob-btn ob-btn-primary" id="ob-btn-empezar">Empezar</button>
+      <p class="ob-sub" style="margin-top:14px; margin-bottom:0;">¿Ya tienes una clave compartida por un familiar? <a href="#" id="ob-link-tengo-clave" style="color:var(--cfe-dark); font-weight:600;">Pégala aquí</a> y omite subir fotos.</p>
+    </div>
+  </div>
+
+  <!-- PASO: GENERAR CLAVE PARA COMPARTIR -->
+  <div class="ob-step" id="ob-step-compartir" style="display:none;">
+    <div class="ob-card">
+      <h2 class="ob-h2">Compartir este servicio</h2>
+      <p class="ob-sub" style="margin-bottom:12px;">Copia esta clave y envíasela a tu familiar (por WhatsApp, por ejemplo). Al pegarla en su celular, verá exactamente los mismos datos, sin tener que fotografiar el recibo de nuevo.</p>
+      <textarea class="clave-box" id="clave-generada" readonly></textarea>
+      <div class="ob-actions" style="margin-top:12px;">
+        <button class="ob-btn ob-btn-ghost" id="ob-btn-copiar-clave">Copiar clave</button>
+        <button class="ob-btn ob-btn-primary" id="ob-btn-whatsapp-clave">Enviar por WhatsApp</button>
+      </div>
+      <div class="form-msg" id="compartir-msg"></div>
+      <div class="ob-actions" style="margin-top:16px;">
+        <button class="ob-btn ob-btn-ghost" id="ob-btn-compartir-atras">Atrás</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO: IMPORTAR CLAVE DE UN FAMILIAR -->
+  <div class="ob-step" id="ob-step-importar" style="display:none;">
+    <div class="ob-card">
+      <h2 class="ob-h2">Importar clave compartida</h2>
+      <p class="ob-sub" style="margin-bottom:12px;">Pega aquí la clave que te compartió tu familiar. Se agregará como un nuevo servicio, con los mismos datos del recibo y las mismas lecturas — no necesitas volver a subir fotos.</p>
+      <textarea class="clave-box" id="clave-pegar-importar" placeholder="Pega la clave aquí..."></textarea>
+      <div class="form-msg" id="importar-msg"></div>
+      <div class="ob-actions" style="margin-top:12px;">
+        <button class="ob-btn ob-btn-ghost" id="ob-btn-importar-atras">Atrás</button>
+        <button class="ob-btn ob-btn-primary" id="ob-btn-importar-confirmar">Importar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO: COMPARAR MI RECIBO CON UNA CLAVE -->
+  <div class="ob-step" id="ob-step-comparar" style="display:none;">
+    <div class="ob-card">
+      <h2 class="ob-h2">Comparar con una clave</h2>
+      <p class="ob-sub" style="margin-bottom:12px;">Pega la clave de tu familiar. Se compara contra el servicio activo ahora mismo (el que subiste tú por tu cuenta), campo por campo — útil para detectar errores de lectura del recibo.</p>
+      <textarea class="clave-box" id="clave-pegar-comparar" placeholder="Pega la clave aquí..."></textarea>
+      <div class="ob-actions" style="margin-top:12px;">
+        <button class="ob-btn ob-btn-ghost" id="ob-btn-comparar-atras">Atrás</button>
+        <button class="ob-btn ob-btn-primary" id="ob-btn-comparar-confirmar">Comparar</button>
+      </div>
+      <div id="comparar-resultado" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- PASO 1: AVISO DE PRIVACIDAD Y TÉRMINOS -->
+  <div class="ob-step" id="ob-step-privacidad" style="display:none;">
+    <div class="ob-card">
+      <h2 class="ob-h2">Aviso de privacidad y términos de uso</h2>
+      <div class="ob-scrollbox">
+        <p><strong>Uso de tus datos.</strong> Las fotos de tu recibo CFE se procesan para extraer los datos de consumo y facturación (titular, servicio, medidor, lecturas, tarifas e histórico). Estos datos se guardan únicamente en el almacenamiento local de este navegador (<em>localStorage</em>); no se envían a ningún servidor propio ni a ninguna API externa.</p>
+        <p><strong>Lectura del recibo (OCR local mejorado).</strong> El texto de tu recibo se lee con Tesseract.js, un motor de reconocimiento óptico de código abierto que corre completamente en tu propio navegador. Antes de leerlo, cada imagen pasa por un preprocesamiento (escala de grises, ajuste de contraste, nitidez y aumento de resolución) que mejora bastante la precisión en fotos borrosas, inclinadas o con sombras. Sube dos fotos: anverso y reverso de tu recibo.</p>
+        <p><strong>Responsabilidad del usuario.</strong> Esta herramienta ofrece estimaciones informativas de consumo y costo; no sustituye tu recibo oficial de CFE ni tiene validez fiscal. Verifica siempre los datos extraídos antes de continuar — podrás editarlos manualmente si algo no coincide con tu recibo.</p>
+        <p><strong>Control de tus datos.</strong> Puedes borrar toda la información guardada en cualquier momento desde el navegador (borrando datos del sitio) o reiniciando la configuración desde este mismo monitor.</p>
+      </div>
+      <label class="ob-check">
+        <input type="checkbox" id="ob-check-privacidad">
+        He leído y acepto el aviso de privacidad y los términos de uso.
+      </label>
+      <div class="ob-actions">
+        <button class="ob-btn ob-btn-ghost" id="ob-btn-priv-atras">Atrás</button>
+        <button class="ob-btn ob-btn-primary" id="ob-btn-priv-continuar" disabled>Continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 2: CARGA DE RECIBO (ANVERSO / REVERSO) + LECTURA INICIAL -->
+  <div class="ob-step" id="ob-step-carga" style="display:none;">
+    <div class="ob-card">
+      <h2 class="ob-h2">Sube tu recibo CFE</h2>
+      <p class="ob-sub" style="margin-bottom:12px;">Sube una foto del anverso y otra del reverso de tu recibo. Las imágenes se mejoran automáticamente (contraste, nitidez, resolución) antes de leerlas, para mayor precisión.</p>
+
+      <div id="ob-modo-fotos-panel">
+        <div class="ob-upload-row">
+          <div class="ob-upload-box" id="ob-box-frente">
+            <input type="file" accept="image/*" id="ob-file-frente" class="ob-file-input">
+            <div class="ob-upload-placeholder" id="ob-placeholder-frente">
+              <svg class="icon-lg" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <div>Anverso del recibo</div>
+              <div class="ob-upload-hint">Totales, medidor, período</div>
+            </div>
+            <img class="ob-upload-preview" id="ob-preview-frente" style="display:none;">
+          </div>
+          <div class="ob-upload-box" id="ob-box-reverso">
+            <input type="file" accept="image/*" id="ob-file-reverso" class="ob-file-input">
+            <div class="ob-upload-placeholder" id="ob-placeholder-reverso">
+              <svg class="icon-lg" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <div>Reverso del recibo</div>
+              <div class="ob-upload-hint">Consumo histórico</div>
+            </div>
+            <img class="ob-upload-preview" id="ob-preview-reverso" style="display:none;">
+          </div>
+        </div>
+      </div>
+
+      <div class="ob-field" style="margin-top:14px; display:none;">
+        <label class="ob-label">API Key de Groq — visión con IA (opcional, recomendado)</label>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="password" class="ob-input" id="ob-groq-key" placeholder="gsk_..." autocomplete="off" spellcheck="false" style="flex:1;">
+          <button type="button" id="ob-groq-toggle" style="padding:8px 12px;border:1px solid var(--border-dk);border-radius:5px;background:#fff;cursor:pointer;font-size:12px;white-space:nowrap;">Ver</button>
+        </div>
+        <div class="ob-hint">
+          Con esta clave se usa <strong>Llama 4 Scout (Groq)</strong> para leer el recibo — mucho más preciso que el OCR local, especialmente con fotos torcidas o con sombras.
+          Sin ella se usa Tesseract.js (OCR local, gratis, sin límite).
+          La clave se guarda solo en este navegador.
+          <a href="https://console.groq.com/keys" target="_blank" rel="noopener">Obtén tu clave gratis en console.groq.com</a>.
+        </div>
+      </div>
+
+      <div class="ob-field" style="margin-top:14px;">
+        <label class="ob-label">Lectura inicial de tu medidor ahora mismo (kWh)</label>
+        <input type="number" step="0.01" class="ob-input" id="ob-lectura-inicial" placeholder="Ej. 3630.00">
+        <div class="ob-hint">Esta lectura será el punto de partida de tu monitoreo en vivo.</div>
+      </div>
+
+      <div class="ob-actions">
+        <button class="ob-btn ob-btn-ghost" id="ob-btn-carga-atras">Atrás</button>
+        <button class="ob-btn ob-btn-primary" id="ob-btn-extraer">Extraer datos del recibo</button>
+      </div>
+      <div class="ob-error" id="ob-error-carga" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- PASO 3: PROCESANDO -->
+  <div class="ob-step" id="ob-step-procesando" style="display:none;">
+    <div class="ob-card ob-card-center">
+      <div class="ob-spinner"></div>
+      <h2 class="ob-h2" style="margin-top:18px;">Leyendo tu recibo…</h2>
+      <p class="ob-sub" id="ob-procesando-msg">Leyendo el recibo con OCR local (gratis, sin límite de uso)…</p>
+    </div>
+  </div>
+
+  <!-- PASO 4: REVISIÓN / EDICIÓN -->
+  <div class="ob-step" id="ob-step-revision" style="display:none;">
+    <div class="ob-card">
+      <h2 class="ob-h2">Revisa los datos extraídos</h2>
+      <p class="ob-sub" id="ob-revision-sub" style="margin-bottom:14px;">Confirma que coincidan con tu recibo. Si algo está mal, puedes editarlo manualmente.</p>
+
+      <div class="ob-review-grid" id="ob-review-grid"><!-- generado por JS --></div>
+
+      <h3 class="ob-h3">Histórico de consumo (bimestres anteriores)</h3>
+      <div class="ob-hist-table-wrap">
+        <table class="ob-hist-table" id="ob-hist-table"><!-- generado por JS --></table>
+      </div>
+      <button class="ob-btn ob-btn-ghost ob-btn-sm" id="ob-btn-hist-add" type="button">+ Agregar bimestre</button>
+      <p class="ob-sub" id="ob-hist-contador" style="margin-top:6px;"></p>
+
+      <details id="ob-debug-texto-wrap" style="margin-top:14px; display:none;">
+        <summary style="cursor:pointer; font-size:13px; color:var(--muted);">Ver texto crudo que leyó el OCR/PDF (para depurar)</summary>
+        <p class="ob-sub" style="margin:6px 0;">Si algo no se extrajo bien, copia este texto tal cual y pégamelo — así ajusto el patrón con el texto real de tu recibo, en vez de adivinar.</p>
+        <textarea id="ob-debug-texto" readonly style="width:100%; min-height:160px; font-family:monospace; font-size:11px; padding:8px; box-sizing:border-box;"></textarea>
+        <button type="button" class="ob-btn ob-btn-ghost ob-btn-sm" id="ob-btn-debug-copiar" style="margin-top:6px;">Copiar texto</button>
+      </details>
+
+      <div class="ob-error" id="ob-error-revision" style="display:none;"></div>
+
+      <div class="ob-actions">
+        <button class="ob-btn ob-btn-ghost" id="ob-btn-revision-reintentar">Reintentar extracción</button>
+        <button class="ob-btn ob-btn-primary" id="ob-btn-revision-confirmar">Los datos son correctos, avanzar</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- /ONBOARDING -->
+
+<!-- HEADER -->
+<header>
+  <div class="header-logo">
+    <div class="cfe-badge">CFE</div>
+    <div>
+      <div class="header-title">Monitor de Consumo</div>
+      <div class="header-name" id="hdr-nombre">Titular del servicio</div>
+    </div>
+  </div>
+  <div style="display:flex; align-items:center; gap:14px;">
+    <button id="btn-actualizar-recibo" title="Cambiar de servicio/medidor" style="background:none;border:1px solid var(--border-dk);border-radius:5px;padding:5px 9px;cursor:pointer;color:var(--muted);display:flex;align-items:center;gap:5px;font-size:10px;font-family:inherit;font-weight:600;letter-spacing:0.3px;">
+      <svg class="icon-sm" viewBox="0 0 24 24"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg>
+      Cambiar servicio
+    </button>
+    <div>
+      <div class="live-dot">En vivo</div>
+      <div class="timestamp" id="clock" style="text-align:right;">--:--:--</div>
+    </div>
+  </div>
+</header>
+
+<div id="cfe-app-root" style="display:none;">
+<div class="container">
+
+  <!-- DATOS CURIOSOS (carrusel) -->
+  <div class="curioso-panel" id="curioso-panel">
+    <div class="curioso-icon">
+      <svg class="icon-lg" viewBox="0 0 24 24"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0018 8 6 6 0 006 8a4.65 4.65 0 001.5 3.5c.76.76 1.23 1.52 1.41 2.5"/></svg>
+    </div>
+    <div class="curioso-body">
+      <div class="curioso-label">¿Sabías que…?</div>
+      <div class="curioso-texto" id="curioso-texto">Cargando datos curiosos…</div>
+    </div>
+    <div class="curioso-progress"><div class="curioso-progress-bar" id="curioso-bar"></div></div>
+  </div>
+
+  <!-- INFO CHIPS -->
+  <div class="info-row">
+    <div class="info-chip">Servicio <strong id="chip-servicio">062920756994</strong></div>
+    <div class="info-chip">Tarifa <strong id="chip-tarifa">01 Doméstica</strong></div>
+    <div class="info-chip">Período inicia <strong id="chip-inicio">03 JUL 26</strong></div>
+    <div class="info-chip">Corte estimado <strong id="chip-corte">~02 SEP 26</strong></div>
+    <div class="info-chip">Lectura base <strong id="chip-base">3630 kWh</strong></div>
+    <div class="info-chip">Lecturas reales <strong id="chip-lecturas">3</strong></div>
+  </div>
+
+  <!-- BIG METER -->
+  <div class="meter-panel">
+    <div class="meter-label">
+      <svg class="icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      Consumo Acumulado Este Período
+    </div>
+    <div class="meter-display">
+      <div class="meter-digits" id="main-kwh">36.700000</div>
+      <div class="meter-unit">kWh</div>
+    </div>
+    <div class="meter-sub">
+      <div class="meter-sub-item">
+        <div class="meter-sub-val" id="main-watts">42.0</div>
+        <div class="meter-sub-lbl">Watts ahora</div>
+      </div>
+      <div class="meter-sep"></div>
+      <div class="meter-sub-item">
+        <div class="meter-sub-val" id="main-pesos">$--.-</div>
+        <div class="meter-sub-lbl">$ Facturado</div>
+      </div>
+      <div class="meter-sep"></div>
+      <div class="meter-sub-item">
+        <div class="meter-sub-val" id="main-dias">-</div>
+        <div class="meter-sub-lbl">Días activos</div>
+      </div>
+    </div>
+    <div class="meter-warn-badge" id="warn-badge">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Consumo dentro del bloque intermedio de tarifa
+    </div>
+  </div>
+
+  <!-- CALIBRATION PANEL -->
+  <div class="calib-panel">
+    <div class="section-title">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      Registrar Lectura Real del Medidor
+    </div>
+    <div class="calib-status">
+      <div class="calib-status-item">Tasa actual: <strong id="calib-tasa">--</strong> kWh/día</div>
+      <div class="calib-status-item">Última calibración: <strong id="calib-ultima">--</strong></div>
+      <div class="calib-status-item">Método: <strong id="calib-metodo">regresión sobre 1 punto</strong></div>
+    </div>
+    <form class="calib-form" id="form-lectura">
+      <div class="form-field">
+        <label>
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 11h.01M10 11h.01M14 11h.01"/></svg>
+          Lectura del medidor (acumulado, kWh)
+        </label>
+        <input type="number" step="1" id="input-medidor" placeholder="Ej. 3677" required>
+        <div class="form-hint">Escribe el número tal cual lo ves ahora en tu medidor físico (el total acumulado). La app calcula sola el consumo del período restando la lectura inicial de tu recibo.</div>
+      </div>
+      <div class="form-field">
+        <label>
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Fecha y hora de la lectura
+        </label>
+        <input type="datetime-local" id="input-fecha" required>
+      </div>
+      <button type="submit" class="btn-primary">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Registrar
+      </button>
+    </form>
+    <div class="form-msg" id="form-msg"></div>
+  </div>
+
+  <!-- WATT TICKER -->
+  <div class="ticker-panel">
+    <svg class="icon-lg ticker-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    <div class="ticker-col">
+      <div class="ticker-lbl">Watts en tiempo real</div>
+      <div class="ticker-val" id="tick-watts">--.- W</div>
+    </div>
+    <div class="ticker-col">
+      <div class="ticker-lbl">Pesos por segundo</div>
+      <div class="ticker-val-pesos" id="tick-pesos-s">$0.0000000</div>
+    </div>
+    <div class="ticker-col">
+      <div class="ticker-lbl">kW instantáneo</div>
+      <div class="ticker-val-pesos" id="tick-kw">0.000 kW</div>
+    </div>
+  </div>
+
+  <!-- PROGRESS TIER BAR -->
+  <div class="progress-panel">
+    <div class="progress-header">
+      <div class="section-title" style="margin-bottom:0;">
+        <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Avance por Bloques Tarifarios (Bimestral)
+      </div>
+      <div class="progress-pct" id="pct-total">--%</div>
+    </div>
+    <div class="tier-bar" id="tier-bar">
+      <div class="tier-seg tier-basic"  id="seg-basic"  style="width:0%">BÁS</div>
+      <div class="tier-seg tier-inter"  id="seg-inter"  style="width:0%"></div>
+      <div class="tier-seg tier-excess" id="seg-excess" style="width:0%"></div>
+      <div class="tier-seg tier-remain" id="seg-remain" style="width:100%"></div>
+    </div>
+    <div class="tier-labels">
+      <span><div class="dot" style="background:var(--cfe-green)"></div> Básico 0–150 kWh (<span id="leg-basico">$1.125</span>)</span>
+      <span><div class="dot" style="background:var(--amber)"></div> Intermedio 150–280 kWh (<span id="leg-inter">$1.369</span>)</span>
+      <span><div class="dot" style="background:var(--red)"></div> Excedente &gt;280 kWh (<span id="leg-excedente">$2.859</span>)</span>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card green">
+      <div class="stat-lbl">Consumo registrado</div>
+      <div class="stat-val" id="s-kwh">36.70</div>
+      <div class="stat-sub">kWh acumulados</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-lbl">Promedio diario</div>
+      <div class="stat-val" id="s-avg">--</div>
+      <div class="stat-sub">kWh/día</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-lbl">Velocidad actual</div>
+      <div class="stat-val" id="s-rate">--</div>
+      <div class="stat-sub">kWh/hora</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-lbl">Media últ. 3 períodos</div>
+      <div class="stat-val" id="s-apoyo">$--</div>
+      <div class="stat-sub">referencia histórica</div>
+    </div>
+  </div>
+
+  <!-- PREDICTION PANEL -->
+  <div class="pred-panel">
+    <div class="section-title" style="color:var(--amber);">
+      <svg class="icon" viewBox="0 0 24 24" style="color:var(--amber);"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      Proyección Estadística al Final del Período
+    </div>
+    <div class="pred-grid">
+      <div class="pred-item">
+        <div class="pred-item-lbl">kWh proyectados</div>
+        <div class="pred-item-val" id="p-kwh" style="color:var(--cfe-deep)">--</div>
+        <div class="pred-item-sub">al cierre del bimestre</div>
+      </div>
+      <div class="pred-item">
+        <div class="pred-item-lbl">Proyección puntual</div>
+        <div class="pred-item-val" id="p-pesos" style="color:var(--amber)">$--</div>
+        <div class="pred-item-sub">basada en tu tasa calibrada</div>
+      </div>
+      <div class="pred-item">
+        <div class="pred-item-lbl">Estimado final ponderado</div>
+        <div class="pred-item-val" id="p-neto" style="color:var(--cfe-dark)">$--</div>
+        <div class="pred-item-sub">60% puntual + 40% histórico</div>
+      </div>
+      <div class="pred-item">
+        <div class="pred-item-lbl">Rango de confianza</div>
+        <div class="pred-item-val" id="p-range" style="color:var(--muted); font-size:13px">-- / --</div>
+        <div class="pred-item-sub">escenario bajo / alto (±1σ)</div>
+      </div>
+      <div class="pred-item">
+        <div class="pred-item-lbl">Días restantes</div>
+        <div class="pred-item-val" id="p-dias" style="color:var(--blue)">--</div>
+        <div class="pred-item-sub">para cierre de período</div>
+      </div>
+      <div class="pred-item">
+        <div class="pred-item-lbl">% del límite bimestral</div>
+        <div class="pred-item-val" id="p-pct-limit" style="color:var(--amber)">--%</div>
+        <div class="pred-item-sub">vs 280 kWh (intermedio)</div>
+      </div>
+    </div>
+    <div style="margin-top:16px; border-top:1px solid var(--border); padding-top:14px;">
+      <div style="font-size:9px; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:9px;">Bandas de Confianza Estadística</div>
+      <div class="conf-row">
+        <div class="conf-lbl">Escenario óptimo</div>
+        <div class="conf-bar-wrap"><div class="conf-bar" id="cb-opt" style="width:0%"></div></div>
+        <div class="conf-val" id="cv-opt">$--</div>
+      </div>
+      <div class="conf-row">
+        <div class="conf-lbl">Media proyectada</div>
+        <div class="conf-bar-wrap"><div class="conf-bar" id="cb-med" style="width:0%"></div></div>
+        <div class="conf-val" id="cv-med">$--</div>
+      </div>
+      <div class="conf-row">
+        <div class="conf-lbl">Escenario alto</div>
+        <div class="conf-bar-wrap"><div class="conf-bar" id="cb-hi"  style="width:0%"></div></div>
+        <div class="conf-val" id="cv-hi">$--</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LECTURAS REALES HISTORY -->
+  <div class="lecturas-panel">
+    <div class="section-title">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Historial de Lecturas Reales
+    </div>
+    <table class="lecturas-table">
+      <thead>
+        <tr>
+          <th>Fecha / hora</th>
+          <th>Total acumulado (ref.)</th>
+          <th>Consumo período</th>
+          <th>Tendencia</th>
+          <th>Origen</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="lecturas-body"></tbody>
+    </table>
+    <div class="lecturas-empty" id="lecturas-empty" style="display:none;">Aún no hay lecturas registradas.</div>
+  </div>
+
+  <!-- HISTÓRICO -->
+  <div class="hist-panel">
+    <div class="section-title">
+      <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Histórico de Consumo (kWh por período)
+    </div>
+    <div class="hist-bars" id="hist-bars"><!-- JS fills --></div>
+    <div class="hist-foot">Tarifa doméstica · bimestral · León, Gto · datos reales del recibo</div>
+  </div>
+
+  <!-- TARIFA TABLE -->
+  <div class="tarifa-panel">
+    <div class="section-title">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M20.59 13.41L13.42 20.58a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      Tabla de Tarifas Aplicables (Tarifa 01)
+    </div>
+    <div class="tarifa-row">
+      <span class="tarifa-tier-badge badge-basic">Básico</span>
+      <span class="tarifa-kwh">0 – 150 kWh</span>
+      <span class="tarifa-price" id="tp-basico">$1.125 / kWh</span>
+    </div>
+    <div class="tarifa-row">
+      <span class="tarifa-tier-badge badge-inter">Intermedio</span>
+      <span class="tarifa-kwh">151 – 280 kWh</span>
+      <span class="tarifa-price" id="tp-inter">$1.369 / kWh</span>
+    </div>
+    <div class="tarifa-row">
+      <span class="tarifa-tier-badge badge-excess">Excedente</span>
+      <span class="tarifa-kwh">> 280 kWh</span>
+      <span class="tarifa-price" id="tp-excedente">$2.859 / kWh</span>
+    </div>
+    <div class="tarifa-row">
+      <span style="font-size:10px; color:var(--muted)">DAP (Alumbrado Público)</span>
+      <span class="tarifa-kwh">fijo</span>
+      <span class="tarifa-price" id="tp-dap">$33.39</span>
+    </div>
+    <div class="tarifa-row">
+      <span style="font-size:10px; color:var(--muted)">IVA</span>
+      <span class="tarifa-kwh">sobre subtotal</span>
+      <span class="tarifa-price">16%</span>
+    </div>
+  </div>
+
+  <!-- INSTALAR APP (PWA) -->
+  <div class="tarifa-panel" id="panel-instalar-app" style="display:none;">
+    <div class="section-title">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Instalar app
+    </div>
+    <p class="hist-foot" style="margin:0 0 12px;">Ábrela desde la pantalla de inicio de tu celular, como una app — sin pasar por el navegador.</p>
+    <button type="button" class="ob-btn ob-btn-primary" id="btn-instalar-app" style="width:100%;">Instalar app</button>
+  </div>
+
+</div><!-- /container -->
+
+<footer>
+  Monitor CFE en tiempo real · <span id="ftr-nombre">Titular del servicio</span> · <span id="ftr-ciudad">León, Gto</span> · <span id="ftr-tarifa">Tarifa 01 doméstica</span>
+</footer>
+</div><!-- /cfe-app-root -->
+
+<!-- MODAL: confirmar eliminación de registro sensible (único o más antiguo) -->
+<div class="ob-overlay" id="modal-confirm-eliminar" style="display:none; z-index:1200;">
+  <div class="ob-step" style="min-height:100vh;">
+    <div class="ob-card ob-card-center">
+      <h2 class="ob-h2">Confirmar eliminación</h2>
+      <p class="ob-sub" id="confirm-eliminar-msg" style="margin:10px 0 4px;"></p>
+      <div class="ob-actions">
+        <button type="button" class="ob-btn ob-btn-ghost" onclick="cancelarEliminarLectura()">Cancelar</button>
+        <button type="button" class="ob-btn ob-btn-primary" style="background:var(--red, #c0392b);" onclick="confirmarEliminarLectura()">Aceptar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PANTALLA: lectura directa (cuando el historial se queda vacío) -->
+<div class="ob-overlay" id="pantalla-lectura-directa" style="display:none; z-index:1100;">
+  <div class="ob-step" style="min-height:100vh;">
+    <div class="ob-card">
+      <h2 class="ob-h2">Captura tu lectura actual</h2>
+      <p class="ob-sub" style="margin-bottom:14px;">Se eliminó tu único registro. Escribe el total acumulado que marca tu medidor ahora mismo para retomar el monitoreo, sin necesidad de volver a subir fotos del recibo.</p>
+
+      <div class="ob-field">
+        <label class="ob-label">Lectura actual del medidor (kWh)</label>
+        <input type="number" step="0.01" class="ob-input" id="input-lectura-directa" placeholder="Ej. 3675.00">
+      </div>
+      <div class="ob-error" id="error-lectura-directa" style="display:none;"></div>
+
+      <div class="ob-actions">
+        <button type="button" class="ob-btn ob-btn-ghost" onclick="comenzarConOtroRecibo()">Comenzar con otro recibo</button>
+        <button type="button" class="ob-btn ob-btn-primary" onclick="confirmarLecturaDirecta()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
